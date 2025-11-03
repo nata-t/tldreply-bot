@@ -21,7 +21,7 @@
   "license": "MIT",
   "type": "commonjs",
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
+    "@google/genai": "^1.28.0",
     "@grammyjs/conversations": "^2.1.0",
     "dotenv": "^17.2.3",
     "grammy": "^1.38.3",

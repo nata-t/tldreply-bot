@@ -1,10 +1,10 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 
 export class GeminiService {
-  private genAI: GoogleGenerativeAI;
+  private ai: GoogleGenAI;
 
   constructor(apiKey: string) {
-    this.genAI = new GoogleGenerativeAI(apiKey);
+    this.ai = new GoogleGenAI({ apiKey });
   }
 
   async summarizeMessages(messages: Array<{
@@ -42,11 +42,11 @@ export class GeminiService {
     Summary:`;
 
     try {
-      // Try gemini-1.0-pro first (most stable)
-      const model = this.genAI.getGenerativeModel({ model: 'gemini-1.0-pro' });
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      return response.text();
+      const response = await this.ai.models.generateContent({
+        model: 'gemini-2.0-flash-001',
+        contents: prompt,
+      });
+      return response.text || 'Generated summary (no text returned)';
     } catch (error) {
       console.error('Gemini API error:', error);
       throw new Error('Failed to generate summary. Please check your API key and try again.');

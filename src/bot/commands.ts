@@ -25,7 +25,6 @@ export class Commands {
     this.bot.command('setup_group', this.handleSetupGroup.bind(this));
     this.bot.command('list_groups', this.handleListGroups.bind(this));
     this.bot.command('remove_group', this.handleRemoveGroup.bind(this));
-    this.bot.on('message', this.handleApiKeyInput.bind(this));
 
     // Group chat commands
     this.bot.command('tldr', this.handleTLDR.bind(this));

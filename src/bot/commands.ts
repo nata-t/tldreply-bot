@@ -220,8 +220,12 @@ export class Commands {
   }
 
   private async handleTLDR(ctx: MyContext) {
+    console.log('handleTLDR called');
     const chat = ctx.chat;
+    console.log('Chat:', chat?.type, chat?.id);
+    
     if (!chat || chat.type === 'private') {
+      console.log('Not a group chat, ignoring');
       await ctx.reply('❌ This command can only be used in a group.');
       return;
     }
@@ -229,7 +233,10 @@ export class Commands {
     try {
       // Check if group is configured
       const group = await this.db.getGroup(chat.id);
+      console.log('Group from DB:', group?.id, group?.enabled);
+      
       if (!group || !group.gemini_api_key_encrypted) {
+        console.log('Group not configured');
         await ctx.reply(
           '❌ This group is not configured yet.\n\n' +
           'Ask an admin to set it up in private chat using /setup_group.'
@@ -343,8 +350,11 @@ export class Commands {
 
     // Don't cache bot commands or empty messages
     if (ctx.message?.text?.startsWith('/')) {
+      console.log('Command received:', ctx.message.text);
       return;
     }
+    
+    console.log('Message received in group', chat.id);
 
     const content = ctx.message?.text || ctx.message?.caption || '';
     if (!content || !ctx.message) {

@@ -42,7 +42,7 @@ export class GeminiService {
     Summary:`;
 
     try {
-      const model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
+      const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       return response.text();

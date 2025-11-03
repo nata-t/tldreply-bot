@@ -33,13 +33,5 @@ ON messages(telegram_chat_id, timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_messages_chat_message 
 ON messages(telegram_chat_id, message_id);
 
--- Group settings table: stores per-group configuration
-CREATE TABLE IF NOT EXISTS group_settings (
-    id SERIAL PRIMARY KEY,
-    telegram_chat_id BIGINT UNIQUE NOT NULL REFERENCES groups(telegram_chat_id) ON DELETE CASCADE,
-    cache_duration_hours INTEGER DEFAULT 48,
-    rate_limit_per_hour INTEGER DEFAULT 10,
-    auto_mode BOOLEAN DEFAULT false,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+-- Note: group_settings table removed - using hardcoded values for simplicity
+-- Messages are cached for 48 hours before automatic deletion

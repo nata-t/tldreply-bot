@@ -12,6 +12,7 @@ export class TLDRBot {
   private bot: Bot<MyContext>;
   private db: Database;
   private encryption: EncryptionService;
+  private cleanupInterval: NodeJS.Timeout | null = null;
 
   constructor(telegramToken: string, db: Database, encryption: EncryptionService) {
     this.db = db;
@@ -51,9 +52,21 @@ export class TLDRBot {
   async start() {
     await this.bot.start();
     console.log('✅ Bot is running!');
+    
+    // Run cleanup every 12 hours (delete messages older than 48 hours)
+    this.cleanupInterval = setInterval(async () => {
+      try {
+        await this.db.cleanupOldMessages(48);
+      } catch (error) {
+        console.error('Error during cleanup:', error);
+      }
+    }, 12 * 60 * 60 * 1000);
   }
 
   async stop() {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+    }
     await this.bot.stop();
     console.log('⏹️ Bot stopped');
   }

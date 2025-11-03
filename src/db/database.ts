@@ -94,18 +94,18 @@ export class Database {
     );
   }
 
-  async getMessagesSinceTimestamp(chatId: number, since: Date): Promise<any[]> {
+  async getMessagesSinceTimestamp(chatId: number, since: Date, limit: number = 1000): Promise<any[]> {
     const result = await this.query(
-      'SELECT * FROM messages WHERE telegram_chat_id = $1 AND timestamp >= $2 ORDER BY timestamp ASC',
-      [chatId, since]
+      'SELECT * FROM messages WHERE telegram_chat_id = $1 AND timestamp >= $2 ORDER BY timestamp ASC LIMIT $3',
+      [chatId, since, limit]
     );
     return result.rows;
   }
 
-  async getMessagesSinceMessageId(chatId: number, sinceMessageId: number): Promise<any[]> {
+  async getMessagesSinceMessageId(chatId: number, sinceMessageId: number, limit: number = 1000): Promise<any[]> {
     const result = await this.query(
-      'SELECT * FROM messages WHERE telegram_chat_id = $1 AND message_id >= $2 ORDER BY message_id ASC',
-      [chatId, sinceMessageId]
+      'SELECT * FROM messages WHERE telegram_chat_id = $1 AND message_id >= $2 ORDER BY message_id ASC LIMIT $3',
+      [chatId, sinceMessageId, limit]
     );
     return result.rows;
   }
@@ -116,21 +116,5 @@ export class Database {
       [hoursAgo.toString()]
     );
     console.log(`Cleaned up ${result.rowCount} old messages`);
-  }
-
-  // Settings operations
-  async getGroupSettings(chatId: number): Promise<any> {
-    const result = await this.query(
-      'SELECT * FROM group_settings WHERE telegram_chat_id = $1',
-      [chatId]
-    );
-    return result.rows[0];
-  }
-
-  async createDefaultSettings(chatId: number): Promise<void> {
-    await this.query(
-      'INSERT INTO group_settings (telegram_chat_id) VALUES ($1) ON CONFLICT DO NOTHING',
-      [chatId]
-    );
   }
 }

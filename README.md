@@ -10,6 +10,7 @@ A Telegram bot that summarizes group chat conversations using Google's Gemini AI
 - 🔒 **Per-Group API Keys**: Each group uses its own Gemini API key
 - 🔐 **Encrypted Storage**: API keys are encrypted at rest
 - 🌐 **PostgreSQL**: Uses PostgreSQL for reliable data storage
+- 🗑️ **Auto-Delete**: Messages are automatically deleted after 48 hours
 
 ## Setup
 
@@ -33,9 +34,9 @@ cd tldreply-bot
 npm install
 ```
 
-3. Create a `.env` file based on `.env.example`:
+3. Create a `.env` file based on `env.example`:
 ```bash
-cp .env.example .env
+cp env.example .env
 ```
 
 4. Configure your environment variables:
@@ -67,19 +68,21 @@ npm start
 
 **Public Groups (have @username):**
 1. Add the bot to your Telegram group
-2. Open a private chat with the bot
-3. Run `/setup_group @your_group_username`
-4. Provide your Gemini API key when prompted
-5. Start using `/tldr` in your group!
+2. **Disable privacy mode**: Go to @BotFather → `/setprivacy` → Select your bot → Choose "Disable"
+3. Open a private chat with the bot
+4. Run `/setup_group @your_group_username`
+5. Provide your Gemini API key when prompted
+6. Start using `/tldr` in your group!
 
 **Private Groups (no @username):**
 1. Add the bot to your Telegram group
-2. Add @userinfobot to your group
-3. Forward any message from your group to @userinfobot to get the chat ID
-4. Open a private chat with your bot
-5. Run `/setup_group <chat_id>` (use the ID from step 3, e.g., `/setup_group -123456789`)
-6. Provide your Gemini API key when prompted
-7. Start using `/tldr` in your group!
+2. **Disable privacy mode**: Go to @BotFather → `/setprivacy` → Select your bot → Choose "Disable"
+3. Add @userinfobot to your group
+4. Forward any message from your group to @userinfobot to get the chat ID
+5. Open a private chat with your bot
+6. Run `/setup_group <chat_id>` (use the ID from step 4, e.g., `/setup_group -123456789`)
+7. Provide your Gemini API key when prompted
+8. Start using `/tldr` in your group!
 
 ### Bot Commands
 
@@ -101,6 +104,18 @@ npm start
 /tldr day     # Summarize last day
 /tldr week    # Summarize last week
 ```
+
+## Privacy & Data Storage
+
+**🔒 Important Privacy Information:**
+
+- Messages are temporarily cached in the database to enable historical summaries
+- **Automatic deletion**: All cached messages are deleted after 48 hours
+- **No permanent storage**: The bot never stores messages permanently
+- **API keys**: Your Gemini API keys are encrypted at rest using AES-256
+- **Bot privacy mode**: Make sure to disable privacy mode via @BotFather (`/setprivacy`) so the bot can read all messages in the group
+
+The bot only stores messages it receives after being added to a group. It cannot access messages sent before it joined.
 
 ## Deploy to Railway
 

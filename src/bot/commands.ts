@@ -55,6 +55,7 @@ export class Commands {
       await ctx.reply(
         `👋 Welcome to TLDR Bot!\n\n` +
         `This bot helps summarize Telegram group chats using Google's Gemini AI.\n\n` +
+        `🔒 <b>Privacy:</b> Messages are cached for up to 48 hours and automatically deleted.\n\n` +
         `<i>Use the buttons below or type commands to get started!</i>`,
         { 
           parse_mode: 'HTML',
@@ -356,6 +357,7 @@ export class Commands {
         `ℹ️ <b>TLDR Info</b>\n\n` +
         `Status: ${status}\n` +
         `Bot: ${enabledStatus}\n\n` +
+        `🔒 Messages auto-delete after 48 hours\n\n` +
         `<i>Use /tldr [timeframe] or reply to a message with /tldr</i>`,
         { parse_mode: 'HTML' }
       );

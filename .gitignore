@@ -29,13 +29,3 @@ logs/
 # Testing
 coverage/
 .nyc_output/
-
-# Documentation (keep only essential)
-FREE_HOSTING_GUIDE.md
-FREE_HOSTING_QUICK.md
-DEPLOY_CHECKLIST.md
-PROJECT_SUMMARY.md
-SETUP.md
-QUICKSTART.md
-render.yaml
-railway.json

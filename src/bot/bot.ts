@@ -4,6 +4,7 @@ import { Database } from '../db/database';
 import { EncryptionService } from '../utils/encryption';
 import { Commands } from './commands';
 import { setupApiKey } from './conversations';
+import { setServices } from '../services/services';
 
 type MyContext = ConversationFlavor<Context>;
 
@@ -16,15 +17,10 @@ export class TLDRBot {
     this.db = db;
     this.encryption = encryption;
     
-    this.bot = new Bot<MyContext>(telegramToken);
+    // Set global services for conversations
+    setServices(db, encryption);
     
-    // Initialize commands (pass db and encryption to conversation context)
-    this.bot.use(async (ctx, next) => {
-      // Store db and encryption in context for conversations
-      (ctx as any).db = this.db;
-      (ctx as any).encryption = this.encryption;
-      await next();
-    });
+    this.bot = new Bot<MyContext>(telegramToken);
     
     // Add conversations plugin
     this.bot.use(conversations());

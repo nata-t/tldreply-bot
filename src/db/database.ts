@@ -41,8 +41,13 @@ export class Database {
 
   // Group operations
   async createGroup(chatId: number, userId: number): Promise<void> {
+    // Use ON CONFLICT to update setup_by_user_id if group exists but isn't linked to this user yet
     await this.query(
-      'INSERT INTO groups (telegram_chat_id, setup_by_user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+      `INSERT INTO groups (telegram_chat_id, setup_by_user_id)
+       VALUES ($1, $2)
+       ON CONFLICT (telegram_chat_id)
+       DO UPDATE SET setup_by_user_id = $2, setup_at = CURRENT_TIMESTAMP
+       WHERE groups.gemini_api_key_encrypted IS NULL`,
       [chatId, userId]
     );
   }

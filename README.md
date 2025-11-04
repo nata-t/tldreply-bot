@@ -16,7 +16,7 @@ A Telegram bot that summarizes group chat conversations using Google's Gemini AI
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - PostgreSQL database (Supabase, Neon, Railway, etc.)
 - Telegram Bot Token (from [@BotFather](https://t.me/botfather))
 - Google Gemini API Key (from [Google AI Studio](https://makersuite.google.com/app/apikey))
@@ -77,21 +77,27 @@ npm start
 **Private Groups (no @username):**
 1. Add the bot to your Telegram group
 2. **Disable privacy mode**: Go to @BotFather → `/setprivacy` → Select your bot → Choose "Disable"
-3. Add @userinfobot to your group
-4. Forward any message from your group to @userinfobot to get the chat ID
-5. Open a private chat with your bot
-6. Run `/setup_group <chat_id>` (use the ID from step 4, e.g., `/setup_group -123456789`)
-7. Provide your Gemini API key when prompted
-8. Start using `/tldr` in your group!
+3. Run `/setup` directly in your group (the bot automatically detects the chat ID!)
+4. Open a private chat with your bot
+5. Run `/continue_setup` and provide your Gemini API key when prompted
+6. Start using `/tldr` in your group!
+
+**Alternative Method (if needed):**
+If you prefer the manual method, you can still use `/setup_group <chat_id>` in private chat. To get the chat ID:
+- Add @userinfobot to your group
+- Forward any message from your group to @userinfobot to get the chat ID
+- Use that ID with `/setup_group` (e.g., `/setup_group -123456789`)
 
 ### Bot Commands
 
 **Private Chat:**
 - `/start` - Welcome message and help
-- `/setup_group @group` or `/setup_group chat_id` - Configure a group for TLDR
+- `/continue_setup` - Complete a pending group setup
+- `/setup_group @group` or `/setup_group chat_id` - Configure a group manually (alternative method)
 - `/list_groups` - List your configured groups
 
 **Group Chat:**
+- `/setup` - Start group setup (easiest method - auto-detects chat ID!)
 - `/tldr [timeframe]` - Get summary (e.g., `/tldr 1h`, `/tldr 6h`, `/tldr day`)
 - `Reply to message` + `/tldr` - Summarize from that message
 - `/tldr_info` - Show group configuration

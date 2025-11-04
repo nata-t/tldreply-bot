@@ -169,6 +169,11 @@ Unified Summary:`;
     - Ongoing questions or unresolved issues
     - Skip greetings, emojis-only messages, and spam
     
+    IMPORTANT: Format your response using markdown:
+    - Use **bold** for important topics or section headers
+    - Use bullet points (* item) for lists
+    - Keep the summary clear and organized
+    
     Conversation:
     ${formattedMessages}
     

@@ -253,6 +253,79 @@ export class TLDRBot {
     }
   }
 
+  /**
+   * Convert markdown to HTML for Telegram
+   * According to Telegram Bot API: https://core.telegram.org/bots/api#html-style
+   * Supports: <b>bold</b>, <i>italic</i>, <u>underline</u>, <s>strikethrough</s>, <code>code</code>, <pre>pre</pre>
+   */
+  private markdownToHtml(text: string): string {
+    if (!text) return '';
+    
+    let html = text;
+    
+    // Step 1: Convert markdown to HTML BEFORE escaping
+    // This order is important - we need to convert markdown first, then escape
+    
+    // Convert **bold** to <b>bold</b> (non-greedy, handle multiple per line)
+    html = html.replace(/\*\*([^*]+?)\*\*/g, '<b>$1</b>');
+    
+    // Convert bullet points: * item or - item (preserve indentation)
+    // Process line by line to handle nested bullets correctly
+    const lines = html.split('\n');
+    const processedLines = lines.map(line => {
+      // Check if line starts with bullet (with optional indentation)
+      const bulletMatch = line.match(/^(\s*)[\*\-]\s+(.+)$/);
+      if (bulletMatch) {
+        const indent = bulletMatch[1];
+        let content = bulletMatch[2];
+        // Content may already have <b> tags from previous conversion
+        return indent + '• ' + content.trim();
+      }
+      return line;
+    });
+    html = processedLines.join('\n');
+    
+    // Convert single *italic* to <i>italic</i> (but not **bold** or bullets)
+    // Since we already converted **bold** and bullets, remaining * are for italic
+    // Match *text* that's not part of ** (already converted) and not at line start
+    html = html.replace(/(?<!\*)\*([^*\n<]+?)\*(?!\*)/g, '<i>$1</i>');
+    
+    // Convert _underline_ to <u>underline</u>
+    html = html.replace(/_([^_]+?)_/g, '<u>$1</u>');
+    
+    // Convert ~~strikethrough~~ to <s>strikethrough</s>
+    html = html.replace(/~~(.+?)~~/g, '<s>$1</s>');
+    
+    // Step 2: Escape HTML special characters (but preserve our tags)
+    // Escape & first (but not already escaped entities)
+    html = html.replace(/&(?!amp;|lt;|gt;|quot;|#\d+;)/g, '&amp;');
+    
+    // Escape < and > that are not part of our HTML tags
+    // Simple approach: escape all < and >, then restore our tags
+    const tagPlaceholders: { [key: string]: string } = {};
+    let placeholderIndex = 0;
+    
+    // Temporarily replace HTML tags with placeholders
+    html = html.replace(/<\/?(?:b|i|u|s|code|pre|a)\b[^>]*>/gi, (match) => {
+      const placeholder = `__TAG_${placeholderIndex++}__`;
+      tagPlaceholders[placeholder] = match;
+      return placeholder;
+    });
+    
+    // Now escape remaining < and >
+    html = html.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    
+    // Restore HTML tags
+    for (const [placeholder, tag] of Object.entries(tagPlaceholders)) {
+      html = html.replace(placeholder, tag);
+    }
+    
+    // Clean up excessive spacing
+    html = html.replace(/\n{3,}/g, '\n\n');
+    
+    return html;
+  }
+
   private async generateScheduledSummary(chatId: number, settings: any): Promise<void> {
     try {
       const group = await this.db.getGroup(chatId);
@@ -284,10 +357,13 @@ export class TLDRBot {
         summaryStyle: settings.summary_style
       });
 
+      // Convert markdown to HTML
+      const formattedSummary = this.markdownToHtml(summary);
+      
       const frequencyText = settings.schedule_frequency === 'weekly' ? 'Weekly' : 'Daily';
       await this.bot.api.sendMessage(
         chatId,
-        `📅 <b>${frequencyText} Scheduled Summary</b>\n\n${summary}`,
+        `📅 <b>${frequencyText} Scheduled Summary</b>\n\n${formattedSummary}`,
         { parse_mode: 'HTML' }
       );
     } catch (error) {

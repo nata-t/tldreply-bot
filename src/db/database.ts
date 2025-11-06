@@ -103,10 +103,16 @@ export class Database {
     // SQL Injection Protection: All values are passed as parameters ($1, $2, etc.)
     // Even if user sends SQL strings like "'; DROP TABLE messages; --", they will be
     // safely stored as text content, not executed as SQL commands.
+    // Use DO UPDATE to handle edited messages - update content, username, and first_name if they changed
     await this.query(
       `INSERT INTO messages (telegram_chat_id, message_id, user_id, username, first_name, content)
        VALUES ($1, $2, $3, $4, $5, $6)
-       ON CONFLICT (telegram_chat_id, message_id) DO NOTHING`,
+       ON CONFLICT (telegram_chat_id, message_id) 
+       DO UPDATE SET 
+         content = EXCLUDED.content,
+         username = EXCLUDED.username,
+         first_name = EXCLUDED.first_name,
+         user_id = EXCLUDED.user_id`,
       [data.chatId, data.messageId, data.userId, data.username, data.firstName, data.content]
     );
   }

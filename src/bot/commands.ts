@@ -98,6 +98,9 @@ export class Commands {
 
     // Message handler for caching
     this.bot.on('message', this.handleMessageCache.bind(this));
+    
+    // Handle edited messages - update the cached message content
+    this.bot.on('edited_message', this.handleEditedMessageCache.bind(this));
   }
 
   private async handleStart(ctx: MyContext) {
@@ -1242,6 +1245,19 @@ export class Commands {
   }
 
   private async handleMessageCache(ctx: MyContext) {
+    await this.processMessageForCache(ctx, ctx.message);
+  }
+
+  private async handleEditedMessageCache(ctx: MyContext) {
+    // Handle edited messages - update the cached message content
+    // Access edited message from context (grammy provides ctx.editedMessage for edited_message events)
+    const editedMessage = ctx.editedMessage || ctx.update.edited_message;
+    if (editedMessage) {
+      await this.processMessageForCache(ctx, editedMessage);
+    }
+  }
+
+  private async processMessageForCache(ctx: MyContext, message: any) {
     const chat = ctx.chat;
     if (!chat || (chat.type !== 'group' && chat.type !== 'supergroup')) {
       return;
@@ -1259,7 +1275,7 @@ export class Commands {
       const settings = await this.db.getGroupSettings(chat.id);
 
       // Check if commands should be excluded
-      if (settings.exclude_commands && ctx.message?.text?.startsWith('/')) {
+      if (settings.exclude_commands && message?.text?.startsWith('/')) {
         return;
       }
 
@@ -1278,15 +1294,15 @@ export class Commands {
     }
 
     // Don't cache empty messages
-    const content = ctx.message?.text || ctx.message?.caption || '';
-    if (!content || !ctx.message) {
+    const content = message?.text || message?.caption || '';
+    if (!content || !message) {
       return;
     }
 
     try {
       await this.db.insertMessage({
         chatId: chat.id,
-        messageId: ctx.message.message_id,
+        messageId: message.message_id,
         userId: ctx.from?.id,
         username: ctx.from?.username,
         firstName: ctx.from?.first_name,

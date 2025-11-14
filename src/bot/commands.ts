@@ -520,7 +520,7 @@ export class Commands {
       '<b>📋 Commands:</b>\n\n' +
       '<b>/setup</b>\n' +
       '<i>Start group setup (admin only)</i>\n\n' +
-      '<b>/tldr [timeframe or count]</b>\n' +
+      '<b>/tldr [timeframe or count] [style]</b>\n' +
       '<i>Get summary for a time period or message count</i>\n' +
       '<i>Examples:</i>\n' +
       '<code>/tldr</code> or <code>/tldr 1h</code> - Last hour\n' +
@@ -531,8 +531,15 @@ export class Commands {
       '<code>/tldr 3d</code> or <code>/tldr 3 days</code> - Last 3 days\n' +
       '<code>/tldr week</code> or <code>/tldr 1 week</code> - Last week\n' +
       '<code>/tldr 300</code> - Last 300 messages\n\n' +
-      '<b>Reply to message + /tldr</b>\n' +
-      '<i>Summarize from that message to now</i>\n\n' +
+      '<b>Style options:</b> Add style at the end (e.g., <code>/tldr 1h detailed</code>)\n' +
+      '• <code>default</code> - Balanced summary with bullet points\n' +
+      '• <code>detailed</code> - Comprehensive summary with all details\n' +
+      '• <code>brief</code> - Very concise, only key points\n' +
+      '• <code>bullet</code> - Organized as bullet list\n' +
+      '• <code>timeline</code> - Chronological order of events\n' +
+      '<i>If no style is specified, uses the group\'s default style set by admin.</i>\n\n' +
+      '<b>Reply to message + /tldr [style]</b>\n' +
+      '<i>Summarize from that message to now (optionally with style)</i>\n\n' +
       '<b>/tldr_info</b>\n' +
       '<i>Show group configuration and status</i>\n\n' +
       '<b>/tldr_settings</b>\n' +
@@ -1021,8 +1028,8 @@ export class Commands {
 
       // Handle time-based or count-based summary
       const args = ctx.message?.text?.split(' ') || [];
-      // Join all arguments after the command to support formats like "1 day", "2 days", "1 hour"
-      const input = args.slice(1).join(' ').trim() || '1h';
+      // Parse arguments to extract timeframe/count and optional style preference
+      const parsedArgs = this.parseTLDRArgs(args.slice(1));
       
       loadingMsg = await ctx.reply('⏳ Generating summary...');
 
@@ -1030,19 +1037,19 @@ export class Commands {
       let messages: any[];
       let summaryLabel: string;
       
-      if (this.isCountBased(input)) {
+      if (this.isCountBased(parsedArgs.input)) {
         // Count-based: Get last N messages
-        const count = this.parseCount(input);
+        const count = this.parseCount(parsedArgs.input);
         summaryLabel = `last ${count} messages`;
         messages = await this.db.getLastNMessages(chat.id, count);
       } else {
         // Time-based: Get messages since timestamp
-        const since = this.parseTimeframe(input);
-        summaryLabel = input;
+        const since = this.parseTimeframe(parsedArgs.input);
+        summaryLabel = parsedArgs.input;
         messages = await this.db.getMessagesSinceTimestamp(chat.id, since, 10000);
       }
       if (messages.length === 0) {
-        const errorMsg = this.isCountBased(input) 
+        const errorMsg = this.isCountBased(parsedArgs.input) 
           ? '📭 No messages found in the database.'
           : '📭 No messages found in the specified time range.';
         await ctx.api.editMessageText(chat.id, loadingMsg.message_id, errorMsg);
@@ -1073,11 +1080,14 @@ export class Commands {
         return;
       }
 
+      // Use user-provided style if available, otherwise fall back to group setting
+      const summaryStyle = parsedArgs.style || settings.summary_style;
+
       const decryptedKey = this.encryption.decrypt(group.gemini_api_key_encrypted);
       const gemini = new GeminiService(decryptedKey);
       const summary = await gemini.summarizeMessages(filteredMessages, {
         customPrompt: settings.custom_prompt,
-        summaryStyle: settings.summary_style
+        summaryStyle: summaryStyle
       });
 
       // Convert markdown to HTML
@@ -1137,6 +1147,10 @@ export class Commands {
       // Update rate limit
       this.rateLimitMap.set(rateLimitKey, now);
 
+      // Parse style from command arguments if provided (e.g., /tldr detailed)
+      const args = ctx.message?.text?.split(' ') || [];
+      const parsedArgs = this.parseTLDRArgs(args.slice(1));
+
       const group = await this.db.getGroup(chat.id);
       const decryptedKey = this.encryption.decrypt(group.gemini_api_key_encrypted);
 
@@ -1172,10 +1186,13 @@ export class Commands {
         return;
       }
 
+      // Use user-provided style if available, otherwise fall back to group setting
+      const summaryStyle = parsedArgs.style || settings.summary_style;
+
       const gemini = new GeminiService(decryptedKey);
       const summary = await gemini.summarizeMessages(filteredMessages, {
         customPrompt: settings.custom_prompt,
-        summaryStyle: settings.summary_style
+        summaryStyle: summaryStyle
       });
 
       // Convert markdown to HTML
@@ -1898,6 +1915,36 @@ export class Commands {
     html = html.replace(/\n{3,}/g, '\n\n');
     
     return html;
+  }
+
+  /**
+   * Parse TLDR command arguments to extract timeframe/count and optional style preference
+   * Examples: "1h detailed", "300 brief", "1 day bullet", "default"
+   * @returns Object with input (timeframe/count string) and optional style
+   */
+  private parseTLDRArgs(args: string[]): { input: string; style?: string } {
+    const validStyles = ['default', 'detailed', 'brief', 'bullet', 'timeline'];
+    
+    if (args.length === 0) {
+      return { input: '1h' };
+    }
+    
+    // Join all args to handle "1 day", "2 days" etc.
+    const fullInput = args.join(' ').trim();
+    
+    // Check if the last word is a valid style
+    const words = args;
+    const lastWord = words[words.length - 1]?.toLowerCase();
+    
+    if (lastWord && validStyles.includes(lastWord)) {
+      // Last word is a style, remove it and use the rest as input
+      const inputParts = words.slice(0, -1);
+      const input = inputParts.length > 0 ? inputParts.join(' ').trim() : '1h';
+      return { input, style: lastWord };
+    }
+    
+    // No style provided, return the full input as timeframe/count
+    return { input: fullInput || '1h' };
   }
 
   /**

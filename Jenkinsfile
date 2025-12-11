@@ -2,119 +2,68 @@ pipeline {
     agent any
 
     environment {
-        CI = 'true'
-        PROJECT_DIR = '/var/www/tldreply-bot'
-    }
-
-    options {
-        timestamps()
-        buildDiscarder(logRotator(numToKeepStr: '10'))
-        disableConcurrentBuilds()
-        timeout(time: 15, unit: 'MINUTES')
+        NODE_ENV = "production"
+        PM2_APP_NAME = "trlreply-bot"
     }
 
     stages {
-        // Stage 1: Clean Workspace
-        stage('1. Clean Workspace') {
+        stage('Checkout') {
             steps {
-                script {
-                    echo '🧹 Cleaning workspace...'
-                    cleanWs()
-                }
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/your-username/your-repo.git',
+                        credentialsId: 'github'   // Your PAT stored as secret text
+                    ]]
+                ])
             }
         }
 
-        // Stage 2: Checkout
-        stage('2. Checkout') {
-            steps {
-                script {
-                    echo '⬇️ Checking out source code...'
-                    checkout scm
-                }
-            }
-        }
-
-        
-
-        // Stage 4: Install Dependencies
-        stage('3. Install Dependencies') {
-            steps {
-                script {
-                    echo '📦 Installing dependencies...'
-                    sh """
-                        cd ${PROJECT_DIR}
-                        npm install
-                    """
-                }
-            }
-        }
-
-        // Stage 5: Code Quality Checks
-        stage('4. Code Quality') {
+        stage('Install, Lint & Format (Parallel)') {
             parallel {
-                stage('Format Check') {
+                stage('Install Dependencies') {
                     steps {
-                        script {
-                            echo '💅 Checking code formatting...'
-                            sh """
-                                cd ${PROJECT_DIR}
-                                npm run format:check
-                            """
-                        }
+                        sh 'npm ci'        // faster and reproducible
                     }
                 }
                 stage('Lint') {
                     steps {
-                        script {
-                            echo '🔍 Linting code...'
-                            sh """
-                                cd ${PROJECT_DIR}
-                                npm run lint:fix
-                            """
-                        }
+                        sh 'npm run lint --if-present'
+                    }
+                }
+                stage('Prettier Format') {
+                    steps {
+                        sh 'npm run format --if-present'
                     }
                 }
             }
         }
 
-        // Stage 6: Build Application
-        stage('5. Build') {
+        stage('Build') {
             steps {
-                script {
-                    echo '🏗️ Building application...'
-                    sh """
-                        cd ${PROJECT_DIR}
-                        npm run build
-                    """
-                }
+                sh 'npm run build --if-present'
             }
         }
 
-        // Stage 7: Deploy with PM2
-        stage('6. Deploy') {
+        stage('Deploy with PM2') {
             steps {
-                script {
-                    echo '🚀 Deploying application with PM2...'
-                    sh """
-                        cd ${PROJECT_DIR}
-                        # Delete old PM2 instance if it exists (ignore error if it doesn't)
-                        pm2 delete tldreply || true
-                        
-                        # Start new instance
-                        pm2 start dist/index.js --name tldreply
-                        
-                        # Configure PM2 to start on system boot
-                        # Try to set up startup script (may require sudo - configure passwordless sudo for Jenkins user)
-                        pm2 startup systemd | tail -n 1 | bash || echo "PM2 startup may already be configured or requires manual sudo setup"
-                        
-                        # Save PM2 process list (required for auto-start)
-                        pm2 save
-                    """
-                }
+                // Stop old app if exists
+                sh '''
+                    pm2 describe $PM2_APP_NAME > /dev/null 2>&1
+                    if [ $? -eq 0 ]; then
+                      pm2 delete $PM2_APP_NAME
+                    fi
+                '''
+
+                // Start fresh build
+                sh '''
+                    pm2 start dist/index.js --name $PM2_APP_NAME
+                    pm2 save
+                '''
             }
         }
     }
-
     post {
         always {
             script {

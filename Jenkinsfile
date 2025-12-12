@@ -1,73 +1,95 @@
+
 pipeline {
     agent any
 
     environment {
+       
+        PATH = "${tool 'node'}/bin:${env.PATH}:./node_modules/.bin"
+        
         NODE_ENV = "production"
-        PM2_APP_NAME = "trlreply-bot"
+        PM2_APP_NAME = "trlreply-bot" // Use the name from your environment variables
     }
 
     stages {
-        stage('Install, Lint & Format (Parallel)') {
+        
+        stage('📦 Install Dependencies') {
+            steps {
+                echo '⬇️ Checking out source code and installing dependencies...'
+                sh 'npm ci' 
+            }
+        }
+
+        stage('🧪 Lint, Format, & Test (Parallel)') {
             parallel {
-                stage('Install Dependencies') {
+                
+                stage('Lint Check') {
                     steps {
-                        sh 'npm ci'        // faster and reproducible
+                        echo '🧹 Running ESLint for code quality...'
+                        sh 'npm run lint' 
                     }
                 }
-                stage('Lint') {
+                
+                stage('Format Check') {
                     steps {
-                        sh 'npm run lint --if-present'
+                        echo '✨ Running Prettier for code formatting...'
+                        sh 'npm run format:check' 
                     }
                 }
-                stage('Prettier Format') {
+                
+                stage('Unit Tests') {
                     steps {
-                        sh 'npm run format --if-present'
+                        echo '🔬 Running unit and integration tests...'
+                        sh 'npm run test' 
                     }
                 }
             }
         }
 
-        stage('Build') {
+        stage('🔨 Build Application') {
             steps {
-                sh 'npm run build --if-present'
+                echo '🛠️ Compiling TypeScript to JavaScript...'
+                sh 'npm run build' 
             }
         }
 
-        stage('Deploy with PM2') {
+        stage('🚀 Deploy with PM2') {
             steps {
-                // Stop old app if exists
+                echo "☁️ Preparing deployment for application: ${env.PM2_APP_NAME}"
+
                 sh '''
+                    echo "Checking existing PM2 processes..."
                     pm2 describe $PM2_APP_NAME > /dev/null 2>&1
+                    
                     if [ $? -eq 0 ]; then
-                      pm2 delete $PM2_APP_NAME
+                        echo "Found old process. Deleting..."
+                        pm2 delete $PM2_APP_NAME
+                    else
+                        echo "No existing process found."
                     fi
                 '''
 
-                // Start fresh build
                 sh '''
+                    echo "Starting new build and saving state..."
                     pm2 start dist/index.js --name $PM2_APP_NAME
                     pm2 save
+                    echo "Application deployed and PM2 state saved."
                 '''
             }
         }
     }
+
     post {
         always {
             script {
                 echo '🧹 Cleaning up workspace...'
-                cleanWs()
+                cleanWs() 
             }
-            // Add notification steps here (Email, Slack, etc.) later
         }
         success {
-            script {
-                echo '✅ Build successful!'
-            }
+            echo '🎉 SUCCESS! Pipeline completed successfully!'
         }
         failure {
-            script {
-                echo '❌ Build failed!'
-            }
+            echo '❌ FAILED! Check the logs for errors.'
         }
     }
 }

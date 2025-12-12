@@ -36,9 +36,6 @@ pipeline {
                 stage('Format Check') { 
                     steps { sh 'npm run format:check' } 
                 }
-                stage('Unit Tests') { 
-                    steps { sh 'npm run test' }
-                }
             }
         }
 

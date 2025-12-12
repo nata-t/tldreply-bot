@@ -1,6 +1,7 @@
 /**
  * FINAL Declarative Pipeline for tldreply-bot CI/CD.
- * Uses the 'node' wrapper with label 'node20' and has correct syntax for parallel steps.
+ * Uses the 'node' wrapper with label 'node20' and has correct syntax for parallel steps 
+ * using the 'script' block fix.
  */
 pipeline {
     agent any
@@ -21,21 +22,27 @@ pipeline {
             }
         }
 
-        // Stage 2: Code Quality Checks (Corrected Parallel Syntax)
-        stage('🧪 Lint, Format (Parallel)') {
+        // Stage 2: Code Quality Checks (FIXED SYNTAX)
+        stage('🧪 Lint, Format, & Test (Parallel)') {
             steps {
                 node('node20') { 
-                    // Use the parallel step with named blocks for concurrency
-                    parallel(
-                        'Lint Check': { 
-                            echo '🧹 Running ESLint...'; 
-                            sh 'npm run lint' 
-                        },
-                        'Format Check': { 
-                            echo '✨ Running Prettier...'; 
-                            sh 'npm run format:check' 
-                        },                      
-                    )
+                    // *** FIX APPLIED: Use a script block to allow the map-based parallel syntax ***
+                    script { 
+                        parallel(
+                            'Lint Check': { 
+                                echo '🧹 Running ESLint...'; 
+                                sh 'npm run lint' 
+                            },
+                            'Format Check': { 
+                                echo '✨ Running Prettier...'; 
+                                sh 'npm run format:check' 
+                            },
+                            'Unit Tests': {
+                                echo '🔬 Running tests...'; 
+                                sh 'npm run test'
+                            }
+                        )
+                    }
                 }
             }
         }

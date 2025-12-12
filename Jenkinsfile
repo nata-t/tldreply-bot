@@ -1,44 +1,42 @@
 /**
- * FINAL Declarative Pipeline for tldreply-bot CI/CD.
- * Uses the 'node' wrapper with label 'node20' to enforce Node.js 20.x
- * (required by project dependencies) and resolve all PATH issues.
+ * CORRECTED FINAL Declarative Pipeline.
+ * Fixes syntax error by nesting the 'node' step inside the 'steps' block for each stage.
  */
 pipeline {
-    // Agent: The initial phase runs on 'any' to read the Jenkinsfile.
     agent any
 
     environment {
-        // Only set application-specific variables. The 'node' wrapper handles the PATH for us.
         NODE_ENV = "production"
         PM2_APP_NAME = "trlreply-bot"
     }
 
     stages {
-        // Stage 1: Dependency Installation (All stages now run inside the 'node20' environment)
+        // Stage 1: Dependency Installation
         stage('📦 Install Dependencies') {
-            steps {
-                // The 'node' step schedules the task on an agent configured with the 'node20' tool.
+            steps { // <--- CORRECT: The 'steps' block is mandatory
                 node('node20') { 
                     echo '⬇️ Installing dependencies...'
                     sh 'npm ci' 
                 }
-            }
+            } // <--- END of 'steps'
         }
 
         // Stage 2: Code Quality Checks
         stage('🧪 Lint, Format, & Test (Parallel)') {
-            node('node20') { 
-                parallel {
-                    // We use 'npm run ...' because 'npx' is now redundant since the 'node' block sets the PATH.
-                    stage('Lint Check') { steps { echo '🧹 Running ESLint...'; sh 'npm run lint' } }
-                    stage('Format Check') { steps { echo '✨ Running Prettier...'; sh 'npm run format:check' } }
+            steps { // <--- CORRECT: The 'steps' block is mandatory
+                node('node20') { 
+                    parallel {
+                        // NOTE: 'parallel' contains 'stage' directives, which contain their own 'steps'
+                        stage('Lint Check') { steps { sh 'npm run lint' } }
+                        stage('Format Check') { steps { sh 'npm run format:check' } }
+                    }
                 }
-            }
+            } // <--- END of 'steps'
         }
 
         // Stage 3: Build Application
         stage('🔨 Build Application') {
-            steps {
+            steps { // <--- CORRECT: The 'steps' block is mandatory
                 node('node20') { 
                     echo '🛠️ Compiling TypeScript...'
                     sh 'npm run build'
@@ -48,12 +46,10 @@ pipeline {
 
         // Stage 4: Deploy Application
         stage('🚀 Deploy with PM2') {
-            steps {
+            steps { // <--- CORRECT: The 'steps' block is mandatory
                 node('node20') { 
                     echo "☁️ Deploying application: ${env.PM2_APP_NAME}"
                     
-                    // The PM2 commands rely on PM2 being globally installed or in the PATH.
-                    // This assumes PM2 is globally available on the agent OR you install it here.
                     sh '''
                         pm2 describe $PM2_APP_NAME > /dev/null 2>&1
                         if [ $? -eq 0 ]; then pm2 delete $PM2_APP_NAME; fi
@@ -65,6 +61,7 @@ pipeline {
         }
     }
 
+    // Post-actions remain correct
     post {
         always {
             echo '🧹 Cleaning up workspace...'

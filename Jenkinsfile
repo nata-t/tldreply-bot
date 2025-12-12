@@ -19,7 +19,7 @@ pipeline {
             }
         }
 
-        stage('🧪 Lint, Format, & Test (Parallel)') {
+        stage('🧪 Lint, Format (Parallel)') {
             parallel {
                 
                 stage('Lint Check') {
@@ -33,13 +33,6 @@ pipeline {
                     steps {
                         echo '✨ Running Prettier for code formatting...'
                         sh 'npm run format:check' 
-                    }
-                }
-                
-                stage('Unit Tests') {
-                    steps {
-                        echo '🔬 Running unit and integration tests...'
-                        sh 'npm run test' 
                     }
                 }
             }

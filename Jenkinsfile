@@ -12,6 +12,9 @@ pipeline {
     }
 
     environment {
+
+        PATH = "${env.PATH}:./node_modules/.bin"
+        
         // These variables are fine
         NODE_ENV = "production"
         PM2_APP_NAME = "trlreply-bot"

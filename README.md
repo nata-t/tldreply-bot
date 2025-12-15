@@ -1,5 +1,7 @@
 # TLDR Bot
 
+// edited by nata-t
+
 A Telegram bot that summarizes group chat conversations using Google's Gemini AI.
 
 ## Features

@@ -1,4 +1,4 @@
-# TLDR Bot 🤖
+# TLDR Bot
 
 A Telegram bot that summarizes group chat conversations using Google's Gemini AI.
 
@@ -27,22 +27,26 @@ A Telegram bot that summarizes group chat conversations using Google's Gemini AI
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone <your-repo-url>
 cd tldreply-bot
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Create a `.env` file based on `env.example`:
+
 ```bash
 cp env.example .env
 ```
 
 4. Configure your environment variables:
+
 ```env
 TELEGRAM_TOKEN=your_telegram_bot_token
 DATABASE_URL=postgresql://user:password@host:port/database
@@ -50,12 +54,14 @@ ENCRYPTION_SECRET=your_random_secret_min_32_chars
 ```
 
 5. Set up the database:
+
 ```bash
 # Connect to your PostgreSQL database and run:
 psql $DATABASE_URL < src/db/schema.sql
 ```
 
 6. Run the bot:
+
 ```bash
 # Development
 npm run dev
@@ -70,6 +76,7 @@ npm start
 ### For Group Admins
 
 **Public Groups (have @username):**
+
 1. Add the bot to your Telegram group
 2. **Disable privacy mode**: Go to @BotFather → `/setprivacy` → Select your bot → Choose "Disable"
 3. Open a private chat with the bot
@@ -78,6 +85,7 @@ npm start
 6. Start using `/tldr` in your group!
 
 **Private Groups (no @username):**
+
 1. Add the bot to your Telegram group
 2. **Disable privacy mode**: Go to @BotFather → `/setprivacy` → Select your bot → Choose "Disable"
 3. Run `/setup` directly in your group (the bot automatically detects the chat ID!)
@@ -87,6 +95,7 @@ npm start
 
 **Alternative Method (if needed):**
 If you prefer the manual method, you can still use `/setup_group <chat_id>` in private chat. To get the chat ID:
+
 - Add @userinfobot to your group
 - Forward any message from your group to @userinfobot to get the chat ID
 - Use that ID with `/setup_group` (e.g., `/setup_group -123456789`)
@@ -94,6 +103,7 @@ If you prefer the manual method, you can still use `/setup_group <chat_id>` in p
 ### Bot Commands
 
 **Private Chat:**
+
 - `/start` - Welcome message and help
 - `/help` - Show detailed help with examples
 - `/continue_setup` - Complete a pending group setup
@@ -103,6 +113,7 @@ If you prefer the manual method, you can still use `/setup_group <chat_id>` in p
 - `/remove_group <chat_id>` - Remove a group configuration
 
 **Group Chat:**
+
 - `/setup` - Start group setup (easiest method - auto-detects chat ID!)
 - `/tldr [timeframe]` - Get summary (e.g., `/tldr 1h`, `/tldr 6h`, `/tldr day`, `/tldr week`)
 - `Reply to message` + `/tldr` - Summarize from that message to now
@@ -124,6 +135,7 @@ If you prefer the manual method, you can still use `/setup_group <chat_id>` in p
 ### Examples
 
 **Time-based summaries:**
+
 ```bash
 /tldr         # Summarize last hour (default)
 /tldr 1h      # Summarize last hour
@@ -135,6 +147,7 @@ If you prefer the manual method, you can still use `/setup_group <chat_id>` in p
 ```
 
 **Count-based summaries:**
+
 ```bash
 /tldr 300     # Summarize last 300 messages
 /tldr 1000    # Summarize last 1000 messages
@@ -142,12 +155,14 @@ If you prefer the manual method, you can still use `/setup_group <chat_id>` in p
 ```
 
 **Reply-based summaries:**
+
 ```
 Reply to any message with: /tldr
 This summarizes from that message to now
 ```
 
 **Settings (admin only):**
+
 ```
 /tldr_settings    # Open settings menu
 /schedule          # Configure automatic summaries
@@ -182,6 +197,7 @@ The bot only stores messages it receives after being added to a group. It cannot
 6. Bot will auto-deploy!
 
 **Free hosting stack:**
+
 - Supabase (free PostgreSQL tier)
 - Google Gemini (free AI tier)
 
@@ -199,7 +215,7 @@ This project includes a GitHub Actions workflow for automated deployment to a VP
 
 1. **Configure GitHub Secrets:**
    Go to your repository → Settings → Secrets and variables → Actions → New repository secret
-   
+
    Add the following secrets:
    - `VPS_HOST`: Your VPS IP address (e.g., `111.xxx.x.x`)
    - `VPS_USERNAME`: Your VPS username (e.g., `username`)
@@ -207,14 +223,15 @@ This project includes a GitHub Actions workflow for automated deployment to a VP
 
 2. **Initial VPS Setup:**
    SSH into your VPS and run:
+
    ```bash
    # Install Node.js (if not already installed)
    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
    sudo apt-get install -y nodejs
-   
+
    # Install PM2 globally
    sudo npm install -g pm2
-   
+
    # Create project directory (if needed)
    sudo mkdir -p /var/www/tldreply
    sudo chown -R $USER:$USER /var/www/tldreply
@@ -222,6 +239,7 @@ This project includes a GitHub Actions workflow for automated deployment to a VP
 
 3. **Configure Environment Variables:**
    On your VPS, create a `.env` file in `/var/www/tldreply`:
+
    ```bash
    cd /var/www/tldreply
    cp env.example .env
@@ -233,6 +251,7 @@ This project includes a GitHub Actions workflow for automated deployment to a VP
    - Or manually trigger via GitHub Actions → Deploy to VPS → Run workflow
 
 The workflow will:
+
 - Build the TypeScript project
 - Deploy to `/var/www/tldreply` on your VPS
 - Install production dependencies

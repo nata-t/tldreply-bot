@@ -59,7 +59,8 @@ pipeline {
         stage('🚀 Deploy with PM2') {
             steps {
                 echo "☁️ Deploying application: ${env.PM2_APP_NAME}"
-                
+                echo "☁️ hook is listening"
+
                 sh '''
                     if pm2 describe $PM2_APP_NAME > /dev/null 2>&1; then
                         echo "App $PM2_APP_NAME is running. Deleting..."
